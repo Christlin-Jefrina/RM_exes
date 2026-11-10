@@ -1,0 +1,42 @@
+EXPERIMENT 1
+
+sudo apt update
+sudo apt install cron git -y
+sudo service cron status
+
+mkdir -p ~/automation
+cd ~/automation
+nano task.sh
+#!/bin/bash
+echo "Job executed at $(date)" >> ~/automation/log.txt
+
+chmod +x task.sh
+./task.sh
+cat log.txt
+
+crontab -e
+* * * * * /bin/bash /home/christlin/automation/task.sh
+
+crontab -l
+sleep 65
+cat ~/automation/log.txt
+
+cd ~/automation
+nano dependency.sh
+#!/bin/bash
+echo "First job started"
+bash ~/automation/task.sh && echo "Second job completed" >> ~/automation/dependency.log
+
+chmod +x dependency.sh
+./dependency.sh
+cat dependency.log
+
+nano failed.sh
+#!/bin/bash
+echo "Testing failed job"
+exit 1
+
+chmod +x failed.sh
+./failed.sh
+echo $?
+
