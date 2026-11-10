@@ -40,3 +40,33 @@ chmod +x failed.sh
 ./failed.sh
 echo $?
 
+git init
+git config user.name "Christlin Jefrina"
+git config user.email "christlinjefrina@karunya.edu.in"
+echo "Automation project completed" > result.txt
+git add .
+git commit -m "First automation commit"
+
+nano git-auto.sh
+#!/bin/bash
+cd "$HOME/automation" || exit 1
+git add .
+git diff --cached --quiet || git commit -m "Automatic update"
+
+chmod +x git-auto.sh
+./git-auto.sh
+
+crontab -e
+*/5 * * * * /bin/bash /home/christlin/automation/git-auto.sh
+
+crontab -l
+git log --oneline
+
+Verfication
+crontab -l
+systemctl --user list-timers
+cat ~/automation/log.txt
+cat ~/automation/dependency.log
+cd ~/automation
+git log --oneline
+journalctl --user -u myjob.service -n 10
