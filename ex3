@@ -1,0 +1,37 @@
+
+EXPERIMENT 3
+
+create a repo in the git hub
+in the repo create a project and select the board and giva name
+add backlog there
+and create a issue in that repo
+then go to ubuntu terminal
+
+cd ~/git-experiment
+nano agile-job.sh
+
+#!/bin/bash
+cd "$HOME/git-experiment" || exit 1
+echo "Agile task executed at $(date)" >> agile.log
+git add agile.log
+git commit -m "Update scheduled job logs (#1)"
+
+chmod +x agile-job.sh
+./agile-job.sh
+git log --oneline
+
+crontab -e
+
+*/5 * * * * /bin/bash /home/christlin/git-experiment/agile-job.sh
+
+crontab -l
+
+git commit -m "Update scheduled job logs (#1)"
+
+git push origin main
+VERIFICATION
+cd ~/git-experiment
+cat agile.log
+git log --oneline
+crontab -l
+git status
