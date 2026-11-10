@@ -1,0 +1,114 @@
+TOKEN: ghp_goTE3TMCDp9qBpiGUOZ4QBvGkWzJN10fAb
+
+EXPERIMENT 4
+
+cd ~/git-experiment
+nano automation.py
+
+from datetime import datetime
+from pathlib import Path
+message = f"Job completed at {datetime.now()}"
+Path("result.txt").write_text(message + "\n")
+print(message)
+
+python3 automation.py
+cat result.txt
+
+nano test_job.py
+
+from pathlib import Path
+def test_output():
+    text = Path("result.txt").read_text()
+    assert "Job completed" in text
+    print("TEST PASSED")
+test_output()
+
+python3 test_job.py
+
+nano report.py
+
+from pathlib import Path
+prompt = """
+Summarize the CI/CD execution.
+Identify errors and recommend actions.
+"""
+try:
+    result = Path("result.txt").read_text().strip()
+    status = "SUCCESS" if "Job completed" in result else "FAILED"
+except FileNotFoundError:
+    result = "Output file missing"
+    status = "FAILED"
+report = f"""
+AUTOMATION REPORT
+Prompt: {prompt.strip()}
+Status: {status}
+Result: {result}
+Action: {"No action required" if status == "SUCCESS" else "Check job output and fix errors"}
+"""
+Path("report.txt").write_text(report)
+print(report)
+
+python3 report.py
+cat report.txt
+
+mkdir -p .github/workflows
+nano .github/workflows/automation.yml
+
+name: Scheduled CI CD Automation
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 * * * *'
+permissions:
+  contents: read
+  issues: write
+jobs:
+  automate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Run Automation
+        run: python3 automation.py
+      - name: Test Automation
+        id: test
+        continue-on-error: true
+        run: python3 test_job.py
+      - name: Generate Report
+        if: always()
+        run: python3 report.py
+      - name: Upload Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: automation-report
+          path: |
+            result.txt
+            report.txt
+          if-no-files-found: warn
+      - name: Update Agile Issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TEST_RESULT: ${{ steps.test.outcome }}
+        run: |
+          if [ "$TEST_RESULT" = "success" ]; then
+            STATUS="Done"
+          else
+            STATUS="In Progress - Failed"
+          fi
+          gh issue comment 1 --body "CI/CD Status: $STATUS"
+
+git remote -v
+
+git add automation.py test_job.py report.py .github/workflows/automation.yml
+git commit -m "Add CI CD automation pipeline"
+git push origin main
+
+python3 automation.py
+python3 test_job.py
+python3 report.py
+cat report.txt
+git log --oneline
